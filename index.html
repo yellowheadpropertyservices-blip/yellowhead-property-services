@@ -271,6 +271,78 @@ ul{margin:0;padding:0;list-style:none}
 .job h3{font-size:1.06rem;letter-spacing:-.01em}
 .job p{font-size:.92rem;color:var(--muted)}
 
+/* ---------- lightbox ---------- */
+.job{position:relative}
+.job__img{transition:filter .18s ease,transform .3s ease}
+.job:hover .job__img{filter:brightness(.93)}
+.job__open{
+  position:absolute;inset:0;width:100%;height:100%;padding:0;margin:0;
+  background:transparent;border:0;cursor:zoom-in;border-radius:var(--radius);
+}
+.job__open:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.job__count{
+  position:absolute;top:11px;right:11px;z-index:2;pointer-events:none;
+  display:inline-flex;align-items:center;gap:6px;
+  font-family:Archivo,Helvetica,Arial,sans-serif;font-variation-settings:"wdth" 90,"wght" 700;
+  font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;
+  background:rgba(14,18,22,.74);color:#fff;padding:5px 10px;border-radius:999px;
+}
+.job__count svg{width:13px;height:13px;flex:none}
+
+.lb{
+  position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  gap:clamp(6px,2vw,18px);
+  background:rgba(8,10,12,.975);
+  backdrop-filter:blur(8px);
+  padding:calc(16px + env(safe-area-inset-top,0px)) 12px calc(16px + env(safe-area-inset-bottom,0px));
+}
+.lb__stage{margin:0;display:flex;flex-direction:column;gap:14px;align-items:center;min-width:0;max-width:100%}
+.lb__frame{
+  display:flex;align-items:center;justify-content:center;
+  max-height:72vh;min-height:0;
+}
+.lb__frame img{
+  max-width:100%;max-height:72vh;width:auto;height:auto;
+  border-radius:3px;background:#1a1f24;
+  box-shadow:0 20px 60px -20px rgba(0,0,0,.8);
+}
+.lb__cap{
+  color:#E8ECEF;text-align:center;max-width:62ch;display:flex;flex-direction:column;gap:5px;
+  font-size:.96rem;line-height:1.5;
+}
+.lb__cap strong{
+  font-family:Archivo,Helvetica,Arial,sans-serif;font-variation-settings:"wdth" 100,"wght" 700;
+  font-size:1.08rem;color:#fff;letter-spacing:-.01em;
+}
+.lb__meta{
+  font-family:Archivo,Helvetica,Arial,sans-serif;font-variation-settings:"wdth" 88,"wght" 700;
+  font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:#9AA6AF;
+}
+.lb__btn{
+  flex:none;display:grid;place-items:center;cursor:pointer;
+  width:46px;height:46px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.22);color:#fff;
+  transition:background-color .15s ease,border-color .15s ease;
+}
+.lb__btn:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.45)}
+.lb__btn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.lb__btn svg{width:21px;height:21px}
+.lb__btn[disabled]{opacity:.3;cursor:default}
+.lb__close{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:14px;z-index:2}
+@media (max-width:640px){
+  .lb{flex-direction:column;justify-content:center}
+  .lb__frame img{max-height:58vh}
+  .lb__stage{order:-1}
+  .lb__btn{width:52px;height:52px}
+  .lb__nav-row{display:flex;gap:18px}
+}
+@media (min-width:641px){
+  .lb__nav-row{display:contents}
+  #lbPrev{order:1}
+  .lb__stage{order:2}
+  #lbNext{order:3}
+}
+
 /* ---------- reviews ---------- */
 .reviews{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:clamp(14px,2vw,20px);align-items:start}
 .review{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:clamp(20px,2.4vw,28px);display:flex;flex-direction:column;gap:12px}
@@ -524,19 +596,21 @@ form.enq{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
 <!-- ============ COMPLETED JOBS ============ -->
 <!--
-  ▸ TO SWAP A PHOTO: replace the src filename with your own file in the
-    images folder. Keep the alt text accurate — it is what Google reads
-    and what someone using a screen reader hears.
-  ▸ TO ADD A JOB: copy one <article class="job"> block and change the
-    src, the title and the description.
-  ▸ data-cat controls the filter buttons: grounds | turnovers | repairs
+  ▸ EACH CARD IS ONE JOB. The cover photo is the <img> in the card; the rest of
+    that job's photos live in the JOBS list in the script near the bottom of this
+    file. Clicking a card opens them all.
+  ▸ TO ADD A PHOTO TO A JOB: drop the file in the images folder, then add a line
+    to that job's "photos" list in JOBS — {src, alt, cap}.
+  ▸ TO ADD A WHOLE NEW JOB: copy an <article class="job"> block below, give it a
+    new data-job name, then add a matching entry to JOBS.
+  ▸ data-cat drives the filter buttons: grounds | repairs | turnovers
 -->
 <section class="sec" id="work">
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Completed jobs</p>
       <h2>Recent work</h2>
-      <p>Photos from our own jobs across the Yellowhead — no stock images.</p>
+      <p>Photos from our own jobs across the Yellowhead — no stock images. Click any job to see the rest of the pictures.</p>
     </div>
 
     <div class="filters" role="group" aria-label="Filter completed jobs">
@@ -548,120 +622,64 @@ form.enq{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
     <div class="jobs" id="jobs">
 
-      <article class="job" data-cat="grounds">
-        <img class="job__img" src="images/job-13.jpg" alt="Finished double steel gate hung on braced timber posts across a gravel approach, mountains behind" width="1400" height="1050" loading="eager">
+      <article class="job" data-cat="grounds" data-job="gate">
+        <img class="job__img" src="images/job-13.jpg" alt="Finished double steel gate hung on braced timber posts across a gravel approach" width="1400" height="1050" loading="lazy">
+        <span class="job__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>5 photos</span>
         <div class="job__body">
           <p class="job__tag">Grounds &amp; concrete</p>
           <h3>Gate build</h3>
           <p>A double steel gate hung on braced timber bucks, posts set in concrete footings.</p>
         </div>
+        <button class="job__open" type="button" aria-label="View all 5 photos of Gate build"></button>
       </article>
 
-      <article class="job" data-cat="repairs">
+      <article class="job" data-cat="repairs" data-job="salon">
         <img class="job__img" src="images/job-09.jpg" alt="Finished hair salon with pale repainted walls, styling chairs and mirrors" width="388" height="515" loading="lazy">
+        <span class="job__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>4 photos</span>
         <div class="job__body">
           <p class="job__tag">Interior repair</p>
           <h3>Hair salon repaint</h3>
           <p>Walls, trim and ceiling taken from dark red to a clean neutral, cut in around the stations and mirrors.</p>
         </div>
+        <button class="job__open" type="button" aria-label="View all 4 photos of Hair salon repaint"></button>
       </article>
 
-      <article class="job" data-cat="repairs">
-        <img class="job__img" src="images/job-10.jpg" alt="The same salon before painting, with dark red walls" width="424" height="566" loading="lazy">
-        <div class="job__body">
-          <p class="job__tag">Before</p>
-          <h3>The same salon, before</h3>
-          <p>Dark red walls and a part-finished partition — where we started.</p>
-        </div>
-      </article>
-
-      <article class="job" data-cat="grounds">
-        <img class="job__img" src="images/job-11.jpg" alt="Gate post braced plumb in a poured concrete footing, tape measure against it" width="425" height="566" loading="lazy">
-        <div class="job__body">
-          <p class="job__tag">Grounds &amp; concrete</p>
-          <h3>Gate posts set</h3>
-          <p>Posts braced plumb and set in poured concrete footings, spacing measured off the opening.</p>
-        </div>
-      </article>
-
-
-      <article class="job" data-cat="repairs">
+      <article class="job" data-cat="repairs" data-job="bathroom">
         <img class="job__img" src="images/job-01.jpg" alt="Finished bathroom with a new tub surround, tile floor and updated vanity" width="478" height="635" loading="lazy">
+        <span class="job__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>3 photos</span>
         <div class="job__body">
           <p class="job__tag">Interior repair</p>
           <h3>Bathroom, start to finish</h3>
           <p>A new ceiling turned into a new floor, a new bath surround and an updated vanity as well.</p>
         </div>
+        <button class="job__open" type="button" aria-label="View all 3 photos of Bathroom, start to finish"></button>
       </article>
 
-      <article class="job" data-cat="repairs">
-        <img class="job__img" src="images/job-02.jpg" alt="Bathroom mid-renovation with fresh ceiling panels above a shower" width="478" height="635" loading="lazy">
+      <article class="job" data-cat="grounds" data-job="concrete">
+        <img class="job__img" src="images/job-08.jpg" alt="Finished concrete apron and walkway with bollards outside a shop" width="847" height="557" loading="lazy">
+        <span class="job__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>3 photos</span>
         <div class="job__body">
-          <p class="job__tag">Interior repair</p>
-          <h3>Ceiling replacement</h3>
-          <p>Water-damaged ceiling stripped and replaced above the shower before the new surround went in.</p>
+          <p class="job__tag">Grounds &amp; concrete</p>
+          <h3>Commercial concrete apron</h3>
+          <p>Dug out, formed and poured — a flat, properly drained approach that takes truck traffic.</p>
         </div>
+        <button class="job__open" type="button" aria-label="View all 3 photos of Commercial concrete apron"></button>
       </article>
 
-      <article class="job" data-cat="repairs">
-        <img class="job__img" src="images/job-03.jpg" alt="New ceiling panels and a fan-light fitted in a bathroom" width="847" height="557" loading="lazy">
-        <div class="job__body">
-          <p class="job__tag">Interior repair</p>
-          <h3>New ceiling and fan-light</h3>
-          <p>Fresh panels, a new exhaust fan-light and clean lines back into the corners.</p>
-        </div>
-      </article>
-
-      <article class="job" data-cat="turnovers">
-        <img class="job__img" src="images/job-04.jpg" alt="Built-in wooden lockers with a bench and shoe cubbies in an entryway" width="478" height="635" loading="lazy">
+      <article class="job" data-cat="turnovers" data-job="lockers">
+        <img class="job__img" src="images/job-05.jpg" alt="Row of built-in lockers with labelled bins above and shoe cubbies below" width="847" height="557" loading="lazy">
+        <span class="job__count"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>2 photos</span>
         <div class="job__body">
           <p class="job__tag">Carpentry</p>
           <h3>Built-in entry lockers</h3>
-          <p>Custom lockers, bench and shoe cubbies built to fit the wall they sit on.</p>
+          <p>Custom lockers, a bench and shoe cubbies built to fit the wall they sit on.</p>
         </div>
+        <button class="job__open" type="button" aria-label="View all 2 photos of Built-in entry lockers"></button>
       </article>
-
-      <article class="job" data-cat="turnovers">
-        <img class="job__img" src="images/job-05.jpg" alt="Row of built-in lockers with labelled bins above and shoe cubbies below" width="847" height="557" loading="lazy">
-        <div class="job__body">
-          <p class="job__tag">Carpentry</p>
-          <h3>Storage wall for a busy entry</h3>
-          <p>Eight bays, labelled bin shelf above and cubbies below — built for a room that takes a beating.</p>
-        </div>
-      </article>
-
-      <article class="job" data-cat="grounds">
-        <img class="job__img" src="images/job-06.jpg" alt="Excavated and graded ground beside a commercial shop building" width="478" height="635" loading="lazy">
-        <div class="job__body">
-          <p class="job__tag">Grounds &amp; concrete</p>
-          <h3>Site prep</h3>
-          <p>Old surface broken out, dug down and graded ready for forms at a commercial shop.</p>
-        </div>
-      </article>
-
-      <article class="job" data-cat="grounds">
-        <img class="job__img" src="images/job-07.jpg" alt="Concrete truck pouring a formed and rebar-reinforced pad on site" width="847" height="557" loading="lazy">
-        <div class="job__body">
-          <p class="job__tag">Grounds &amp; concrete</p>
-          <h3>Pour day</h3>
-          <p>Forms set, rebar tied and mesh down — then the truck backs in.</p>
-        </div>
-      </article>
-
-      <article class="job" data-cat="grounds">
-        <img class="job__img" src="images/job-08.jpg" alt="Finished concrete apron and walkway with bollards outside a shop" width="847" height="557" loading="lazy">
-        <div class="job__body">
-          <p class="job__tag">Grounds &amp; concrete</p>
-          <h3>Finished apron and walkway</h3>
-          <p>A flat, properly drained approach and a walkway that will take truck traffic.</p>
-        </div>
-      </article>
-
     </div>
   </div>
 </section>
 
-<!-- ============ REVIEWS ============ -->
 <!--
   ▸ TO ADD A REVIEW: copy one <figure class="review"> block and fill it in.
     Only put up reviews people actually gave you, in their own words.
@@ -856,6 +874,28 @@ form.enq{display:grid;grid-template-columns:1fr 1fr;gap:16px}
   </div>
 </footer>
 
+<div class="lb" id="lightbox" hidden role="dialog" aria-modal="true" aria-labelledby="lbTitle">
+  <button class="lb__btn lb__close" type="button" id="lbClose" aria-label="Close photos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+  <div class="lb__nav-row">
+    <button class="lb__btn" type="button" id="lbPrev" aria-label="Previous photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+    </button>
+    <button class="lb__btn" type="button" id="lbNext" aria-label="Next photo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+    </button>
+  </div>
+  <figure class="lb__stage">
+    <div class="lb__frame"><img id="lbImg" alt=""></div>
+    <figcaption class="lb__cap">
+      <strong id="lbTitle"></strong>
+      <span id="lbText"></span>
+      <span class="lb__meta" id="lbCount"></span>
+    </figcaption>
+  </figure>
+</div>
+
 <div class="callbar">
   <a class="btn btn--primary" data-biz="tel-link" href="#enquire">Call now</a>
   <a class="btn btn--ghost" href="#enquire">Get a quote</a>
@@ -922,18 +962,144 @@ const CONFIG = {
   const yr = document.getElementById("yr");
   if (yr) yr.textContent = new Date().getFullYear();
 
-  /* ---- completed jobs filter ---- */
+  /* ---- completed jobs: filter + photo viewer ---- */
+
+  /* Every photo for every job. To add one, append {src, alt, cap} to a list. */
+  const JOBS = {
+    gate: {
+      title: "Gate build",
+      photos: [
+        { src: "images/job-13.jpg", alt: "Finished double steel gate hung on braced timber posts across a gravel approach", cap: "The finished gate \u2014 double steel leaves on braced timber bucks." },
+        { src: "images/job-12.jpg", alt: "Mini excavator digging post holes beside a concrete barrier",                      cap: "Digging the post holes beside the approach." },
+        { src: "images/job-11.jpg", alt: "Gate post braced plumb in a poured concrete footing, tape measure against it",     cap: "Post braced plumb and set in a poured concrete footing." },
+        { src: "images/job-16.jpg", alt: "Gate post standing in a trench with a tape measure running down it",               cap: "Checking depth before the concrete goes in." },
+        { src: "images/job-17.jpg", alt: "Hand holding a tape measure across a timber post over a concrete footing",         cap: "Measuring the spacing off the opening." }
+      ]
+    },
+    salon: {
+      title: "Hair salon repaint",
+      photos: [
+        { src: "images/job-09.jpg", alt: "Finished hair salon with pale repainted walls, styling chairs and mirrors", cap: "After \u2014 the styling side in a clean neutral." },
+        { src: "images/job-14.jpg", alt: "Wider view of the finished salon with reception desk and plants",           cap: "After \u2014 looking back toward reception." },
+        { src: "images/job-15.jpg", alt: "The salon before painting, walls part stripped with red fittings",          cap: "Before \u2014 part way through stripping it back." },
+        { src: "images/job-10.jpg", alt: "The salon before painting, with dark red walls",                            cap: "Before \u2014 the dark red we started from." }
+      ]
+    },
+    bathroom: {
+      title: "Bathroom, start to finish",
+      photos: [
+        { src: "images/job-01.jpg", alt: "Finished bathroom with a new tub surround, tile floor and updated vanity", cap: "Finished \u2014 new surround, new floor, updated vanity." },
+        { src: "images/job-02.jpg", alt: "Bathroom mid-renovation with fresh ceiling panels above a shower",          cap: "Mid-job \u2014 ceiling stripped and replaced above the shower." },
+        { src: "images/job-03.jpg", alt: "New ceiling panels and a fan-light fitted in a bathroom",                   cap: "New panels and a new exhaust fan-light." }
+      ]
+    },
+    concrete: {
+      title: "Commercial concrete apron",
+      photos: [
+        { src: "images/job-08.jpg", alt: "Finished concrete apron and walkway with bollards outside a shop", cap: "The finished apron and walkway." },
+        { src: "images/job-06.jpg", alt: "Excavated and graded ground beside a commercial shop building",     cap: "Broken out, dug down and graded ready for forms." },
+        { src: "images/job-07.jpg", alt: "Concrete truck pouring a formed and rebar-reinforced pad on site",   cap: "Forms set, rebar tied, pour day." }
+      ]
+    },
+    lockers: {
+      title: "Built-in entry lockers",
+      photos: [
+        { src: "images/job-05.jpg", alt: "Row of built-in lockers with labelled bins above and shoe cubbies below", cap: "Eight bays, bin shelf above, cubbies below." },
+        { src: "images/job-04.jpg", alt: "Built-in wooden lockers with a bench and shoe cubbies in an entryway",     cap: "Built to fit the wall they sit on." }
+      ]
+    }
+  };
+
   const chips = document.querySelectorAll(".chip");
-  const jobs  = document.querySelectorAll("#jobs .job");
+  const cards = document.querySelectorAll("#jobs .job");
   chips.forEach(chip => {
     chip.addEventListener("click", () => {
       const want = chip.dataset.filter;
       chips.forEach(c => c.setAttribute("aria-pressed", String(c === chip)));
-      jobs.forEach(job => {
-        job.hidden = !(want === "all" || job.dataset.cat === want);
+      cards.forEach(card => {
+        card.hidden = !(want === "all" || card.dataset.cat === want);
       });
     });
   });
+
+  const lb      = document.getElementById("lightbox");
+  const lbImg   = document.getElementById("lbImg");
+  const lbTitle = document.getElementById("lbTitle");
+  const lbText  = document.getElementById("lbText");
+  const lbCount = document.getElementById("lbCount");
+  const lbPrev  = document.getElementById("lbPrev");
+  const lbNext  = document.getElementById("lbNext");
+  const lbClose = document.getElementById("lbClose");
+
+  let set = [], at = 0, opener = null;
+
+  const draw = () => {
+    const ph = set[at];
+    lbImg.src = ph.src;
+    lbImg.alt = ph.alt;
+    lbText.textContent = ph.cap;
+    lbCount.textContent = "Photo " + (at + 1) + " of " + set.length;
+    lbPrev.disabled = set.length < 2;
+    lbNext.disabled = set.length < 2;
+    // preload the next one so arrowing through feels instant
+    if (set.length > 1) {
+      const n = new Image();
+      n.src = set[(at + 1) % set.length].src;
+    }
+  };
+
+  const step = d => { at = (at + d + set.length) % set.length; draw(); };
+
+  const open = (key, btn) => {
+    const job = JOBS[key];
+    if (!job || !job.photos.length) return;
+    set = job.photos; at = 0; opener = btn;
+    lbTitle.textContent = job.title;
+    draw();
+    lb.hidden = false;
+    document.body.style.overflow = "hidden";
+    lbClose.focus();
+  };
+
+  const shut = () => {
+    lb.hidden = true;
+    document.body.style.overflow = "";
+    lbImg.removeAttribute("src");
+    if (opener) { opener.focus(); opener = null; }
+  };
+
+  document.querySelectorAll(".job__open").forEach(btn => {
+    btn.addEventListener("click", () => open(btn.closest(".job").dataset.job, btn));
+  });
+
+  lbPrev.addEventListener("click", () => step(-1));
+  lbNext.addEventListener("click", () => step(1));
+  lbClose.addEventListener("click", shut);
+  lb.addEventListener("click", e => { if (e.target === lb || e.target.classList.contains("lb__frame")) shut(); });
+
+  document.addEventListener("keydown", e => {
+    if (lb.hidden) return;
+    if (e.key === "Escape")     { shut(); }
+    if (e.key === "ArrowLeft")  { step(-1); }
+    if (e.key === "ArrowRight") { step(1); }
+    if (e.key === "Tab") {
+      // keep focus inside the viewer while it is open
+      const f = [lbClose, lbPrev, lbNext].filter(b => !b.disabled);
+      const i = f.indexOf(document.activeElement);
+      e.preventDefault();
+      f[(i + (e.shiftKey ? -1 : 1) + f.length) % f.length].focus();
+    }
+  });
+
+  // swipe on phones
+  let tx = null;
+  lb.addEventListener("touchstart", e => { tx = e.changedTouches[0].clientX; }, { passive: true });
+  lb.addEventListener("touchend", e => {
+    if (tx === null) return;
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50 && set.length > 1) step(dx < 0 ? 1 : -1);
+    tx = null;
+  }, { passive: true });
 
   /* ---- enquiry form ---- */
   const form   = document.getElementById("enquiryForm");
